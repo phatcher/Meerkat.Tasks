@@ -2,6 +2,7 @@
 param(
     [Parameter(mandatory=$true)][string]$machineName,
     [Parameter(mandatory=$true)][string]$siteName,
+    [Parameter()][string]$appName,
     [Parameter(mandatory=$true)][string]$packagePath,
     [Parameter(mandatory=$true)][string]$userName,
     [Parameter(mandatory=$true)][string]$password
@@ -24,6 +25,7 @@ function Get-SingleFile($files, $pattern) {
 
 Write-Host "Machine Name: $machineName"
 Write-Host "Site Name: $siteName"
+Write-Host "App Name: $appName"
 Write-Host "User Name: $userName"
 
 $MSDeployKey = 'HKLM:\SOFTWARE\Microsoft\IIS Extensions\MSDeploy\3' 
@@ -50,8 +52,13 @@ $parametersFile = Join-Path $packagePath (Get-SingleFile $parametersFile "*.SetP
 Write-Host "Parameters File: $parametersFile"
 
 $publishUrl = "https://$machineName" + ":8172/msdeploy.axd?site=$siteName"
-$appPath = $siteName
-Write-Host "Deploying package to $publishUrl"
+$foo = "$appName"
+$webApp = "$siteName"
+if ($foo -ne "") {
+    $webApp = "$siteName\$foo"
+}
+
+Write-Host "Deploying package to $publishUrl application $appPath"
 
 $allowUntrusted = "-allowUntrusted"
 #$allowUntrusted = ""
@@ -63,10 +70,17 @@ $arguments =
     "-source:package=""$packageFile""",
     "-dest:auto,computerName='$publishUrl',userName='$userName',password='$password',authType='Basic',includeAcls='False'",
     "-setParamFile:""$parametersFile""",
-    "-setParam:name='IIS", "Web", "Application", ("Name',value='" + $appPath + "'"),
+    "-setParam:name='IIS", "Web", "Application", ("Name',value='" + $webApp + "'"),
     "-verb:sync",
     "$allowUntrusted"
 
 Write-Host $arguments
 
-. $msdeploy $arguments 
+try
+{
+    . $msdeploy $arguments
+}
+catch
+{
+    exit 1
+}
