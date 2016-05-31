@@ -66,7 +66,7 @@ $allowUntrusted = "-allowUntrusted"
 #    $allowUntrusted = "-allowUntrusted"
 #}
 
-$arguments = 
+$arguments =
     "-source:package=""$packageFile""",
     "-dest:auto,computerName='$publishUrl',userName='$userName',password='$password',authType='Basic',includeAcls='False'",
     "-setParamFile:""$parametersFile""",
@@ -76,11 +76,17 @@ $arguments =
 
 Write-Host $arguments
 
+$msdeployCmd = Get-Command $msdeploy
+$command = "& `$msdeployCmd --% $arguments"
+$sb = $ExecutionContext.InvokeCommand.NewScriptBlock($command)
+
+Write-Host $command
+
 try
 {
-    . $msdeploy $arguments
+    . $sb
 }
-catch
+catch 
 {
     exit 1
 }

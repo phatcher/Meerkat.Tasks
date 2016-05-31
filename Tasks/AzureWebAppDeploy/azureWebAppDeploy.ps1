@@ -68,4 +68,17 @@ $arguments =
 
 Write-Host $arguments
 
-. $msdeploy $arguments
+$msdeployCmd = Get-Command $msdeploy
+$command = "& `$msdeployCmd --% $arguments"
+$sb = $ExecutionContext.InvokeCommand.NewScriptBlock($command)
+
+Write-Host $command
+
+try
+{
+    . $sb
+}
+catch 
+{
+    exit 1
+}
